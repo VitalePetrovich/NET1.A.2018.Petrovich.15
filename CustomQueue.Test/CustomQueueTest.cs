@@ -7,33 +7,82 @@ using NET1.A._2018.Petrovich._15;
 
 namespace CustomQueue.Test
 {
+    using System.Collections;
     using System.Diagnostics;
 
     using NUnit.Framework;
+
+    class Point : IEquatable<Point>
+    {
+        private int x, y;
+
+        public Point(int x = 0, int y = 0)
+        {
+            this.x = x;
+            this.y = y;
+        }
+
+        public bool Equals(Point other)
+        {
+            return (this.x == other.x && this.y == other.y);
+        }
+    }
 
     [TestFixture]
     public class CustomQueueTest
     {
         [Test]
-        public void GeneralFunctionality()
+        public void GeneralFunctionalityBCLTypesInt()
         {
-            CustomQueue<int> customQueue = new CustomQueue<int>() {4, 5, 0};
-            Debug.WriteLine($"Number of elements before adding elements: {customQueue.Count}");
-            customQueue.Add(2);
+            CustomQueue<int> customQueue = new CustomQueue<int>();
+            
+            customQueue.Add(5);
+            customQueue.Add(15);
+            Assert.AreEqual(customQueue, new[] {5, 15});
+
             customQueue.Get();
-            customQueue.Add(3);
-            Debug.WriteLine($"Get element from head of queue: {customQueue.Get()}");
-            Debug.WriteLine($"Peek header element: {customQueue.Peek()}");
-            Debug.WriteLine($"Peek header element again: {customQueue.Peek()}");
-            Debug.WriteLine($"Is queue contains '5': {customQueue.Contains(5)}");
-            Debug.WriteLine($"Is queue contains '4': {customQueue.Contains(4)}");
-            Debug.WriteLine("====================================");
-            foreach (var item in customQueue)
-            {
-                Debug.Write(item + " ");
-            }
-            Debug.WriteLine("\n====================================");
-            customQueue.Clear();
+            Assert.AreEqual(customQueue, new[] {15});
+
+            Assert.AreEqual(customQueue.Peek(), 15);
+            Assert.AreEqual(customQueue.Count, 1);
+            Assert.IsTrue(customQueue.Contains(15));
+            Assert.IsFalse(customQueue.Contains(5));
+        }
+
+        [Test]
+        public void GeneralFunctionalityWithArrayList()
+        {
+            CustomQueue<ArrayList> customQueue = new CustomQueue<ArrayList>();
+
+            customQueue.Add(new ArrayList() {2});
+            customQueue.Add(new ArrayList() {"Hello"});
+            Assert.AreEqual(customQueue, new[] {new ArrayList() {2}, new ArrayList() {"Hello"}});
+
+            customQueue.Get();
+            Assert.AreEqual(customQueue, new[] {new ArrayList() { "Hello" }});
+
+            Assert.AreEqual(customQueue.Peek(), new ArrayList() { "Hello" } );
+            Assert.AreEqual(customQueue.Count, 1);
+            Assert.IsFalse(customQueue.Contains(new ArrayList() { "Hello" }));
+            Assert.IsFalse(customQueue.Contains(new ArrayList() { 2 }));
+        }
+
+        [Test]
+        public void GeneralFunctionalityWithPointEquatable()
+        {
+            CustomQueue<Point> customQueue = new CustomQueue<Point>();
+
+            customQueue.Add(new Point(2, 4));
+            customQueue.Add(new Point(1, 8));
+            Assert.AreEqual(customQueue, new[] { new Point(2, 4), new Point(1, 8) });
+
+            customQueue.Get();
+            Assert.AreEqual(customQueue, new[] { new Point(1, 8) });
+
+            Assert.AreEqual(customQueue.Peek(), new Point(1, 8));
+            Assert.AreEqual(customQueue.Count, 1);
+            Assert.IsTrue(customQueue.Contains(new Point(1, 8)));
+            Assert.IsFalse(customQueue.Contains(new Point(2, 4)));
         }
     }
 }

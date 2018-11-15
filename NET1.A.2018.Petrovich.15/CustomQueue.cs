@@ -4,6 +4,10 @@ using System.Collections.Generic;
 
 namespace NET1.A._2018.Petrovich._15
 {
+    /// <summary>
+    /// Custom Queue class.
+    /// </summary>
+    /// <typeparam name="T">Type of elements in Queue.</typeparam>
     public class CustomQueue<T> : IEnumerable<T>, IEnumerable, IReadOnlyCollection<T>
     {
         private int defaultCapasity = 4;
@@ -14,11 +18,14 @@ namespace NET1.A._2018.Petrovich._15
 
         private int tail;
 
-        internal int Version { get; private set; }
+        private int version;
 
         public int Count { get; private set; }
 
         public bool IsReadOnly { get; set; }
+
+        #region ctors
+        
 
         public CustomQueue()
         {
@@ -26,7 +33,7 @@ namespace NET1.A._2018.Petrovich._15
             this.Count = 0;
             this.head = 0;
             this.tail = 0;
-            this.Version = 0;
+            this.version = 0;
             this.IsReadOnly = false;
         }
 
@@ -36,7 +43,7 @@ namespace NET1.A._2018.Petrovich._15
             this.Count = 0;
             this.head = 0;
             this.tail = 0;
-            this.Version = 0;
+            this.version = 0;
             this.IsReadOnly = false;
         }
 
@@ -52,20 +59,43 @@ namespace NET1.A._2018.Petrovich._15
             }
         }
 
+        #endregion
+
+        /// <summary>
+        /// Add element to end of queue.
+        /// </summary>
+        /// <param name="item">Element.</param>
         public void Add(T item)
         {
             if (this.Count == this.arr.Length)
             {
-                Array.Resize(ref this.arr, this.arr.Length * 2);
+                T[] newArray = new T[this.arr.Length * 2];
+                if (this.head == this.tail)
+                {
+                    Array.Copy(this.arr, this.head, newArray, 0, Count - this.head);
+                    Array.Copy(this.arr, 0, newArray, Count - this.head, this.tail);
+                }
+                else
+                {
+                    Array.Copy(this.arr, newArray, Count);
+                }
+
+                this.arr = newArray;
+                this.head = 0;
                 this.tail = this.Count;
             }
 
             this.arr[this.tail] = item;
             this.tail = (this.tail + 1) % this.arr.Length;
             this.Count++;
-            this.Version++;
+            this.version++;
         }
 
+        /// <summary>
+        /// Dequeue elements from queue.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Throws if queue is empty.</exception>
+        /// <returns>Upper element of queue.</returns>
         public T Get()
         {
             if (this.Count == 0)
@@ -75,11 +105,16 @@ namespace NET1.A._2018.Petrovich._15
             this.arr[this.head] = default(T);
             this.head = (this.head + 1) % this.arr.Length;
             this.Count--;
-            this.Version++;
+            this.version++;
 
             return temp;
         }
 
+        /// <summary>
+        /// Look upon upper element.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Throws if queue is empty.</exception>
+        /// <returns>Upper element of queue.</returns>
         public T Peek()
         {
             if (this.Count == 0)
@@ -88,16 +123,28 @@ namespace NET1.A._2018.Petrovich._15
             return this.arr[this.head];
         }
 
+        /// <summary>
+        /// Clear queue.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Throws if queue is empty.</exception>
         public void Clear()
         {
+            if (this.Count == 0)
+                throw new InvalidOperationException();
+
             this.arr = new T[defaultCapasity];
 
-            this.Version++;
+            this.version++;
             this.Count = 0;
             this.head = 0;
             this.tail = 0;
         }
 
+        /// <summary>
+        /// Look for element in queue.
+        /// </summary>
+        /// <param name="item">Element.</param>
+        /// <returns>TRUE, if queue containt item.</returns>
         public bool Contains(T item)
         {
             EqualityComparer<T> comparer = EqualityComparer<T>.Default;
@@ -116,8 +163,19 @@ namespace NET1.A._2018.Petrovich._15
             return false;
         }
 
+        /// <summary>
+        /// Copy elements of queue to array.
+        /// </summary>
+        /// <param name="array">Destination array.</param>
+        /// <param name="arrayIndex">Insertin index in destination array.</param>
+        /// <exception cref="InvalidOperationException">Throws if array length is less than queue lenght.</exception>
+        /// <exception cref="ArgumentException">arrayIndex is invalid.</exception>
+        /// <exception cref="ArgumentNullException">Ref to destination array is null.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+
             if (array.Length < this.Count)
                 throw new InvalidOperationException();
 
@@ -135,6 +193,10 @@ namespace NET1.A._2018.Petrovich._15
             }
         }
 
+        /// <summary>
+        /// Return enumerator of queue.
+        /// </summary>
+        /// <returns>Enumerator.</returns>
         public CustomQueueEnumerator GetEnumerator()
         {
             return new CustomQueueEnumerator(this);
@@ -144,8 +206,11 @@ namespace NET1.A._2018.Petrovich._15
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        public T this[int index] => this.arr[index];
+        private T this[int index] => this.arr[index];
 
+        /// <summary>
+        /// Struct of emunerator.
+        /// </summary>
         public struct CustomQueueEnumerator : IEnumerator<T>, IEnumerator
         {
             private CustomQueue<T> queue;
@@ -159,7 +224,7 @@ namespace NET1.A._2018.Petrovich._15
             public CustomQueueEnumerator(CustomQueue<T> queue)
             {
                 this.queue = queue;
-                this.initialVersion = queue.Version;
+                this.initialVersion = queue.version;
                 this.index = queue.head - 1;
                 this.numberOfElements = queue.Count;
             }
@@ -174,7 +239,7 @@ namespace NET1.A._2018.Petrovich._15
 
             public bool MoveNext()
             {
-                if (this.initialVersion != this.queue.Version)
+                if (this.initialVersion != this.queue.version)
                     throw new InvalidOperationException($"Queue has been modifyed!");
 
                 this.index = (this.index + 1) % this.queue.arr.Length;
